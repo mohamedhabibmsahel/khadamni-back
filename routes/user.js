@@ -5,7 +5,9 @@ const Bcrypt = require ('bcrypt')
 const jwt = require('jsonwebtoken')
 const multer = require('../Middleware/multer-config')
 
-//getting all
+//getting all users
+//numt: req.body.numt,
+//photoProfil: `${req.protocol}://${req.get('host')}/upload/${req.file.filename}`
 router.get ('/', async (req,res) => {
     try {
         const user = await User.find()
@@ -14,25 +16,21 @@ router.get ('/', async (req,res) => {
         res.status(500).json({reponse: error.message})
     }
 }) 
-//getting one
+//getting user
 router.get ('/:id',authentificateToken,getUserById,(req,res) => {
     res.json(res.user)
 })
-//creating one
+//creating user
 router.post ('/',multer,async (req,res) => {
     await User.init();
-
     const hashedPass = await Bcrypt.hash(req.body.password,10)
     const user = new User({
         nom: req.body.nom,
         prenom: req.body.prenom,
         email: req.body.email,
         password: hashedPass,
-        numt: req.body.numt,
-        photoProfil: `${req.protocol}://${req.get('host')}/upload/${req.file.filename}`
+        numt: req.body.numt
     })
-
-    
     try {
         const newUser = await user.save()
         res.status(201).json(newUser)
@@ -40,7 +38,7 @@ router.post ('/',multer,async (req,res) => {
         res.status(400).json({reponse: error.message})
     }
 })
-//updating one
+//updating user
 router.patch ('/:id',getUserById,async (req,res) => {
     if (req.body.nom != null){
         res.user.nom = req.body.nom
@@ -68,7 +66,7 @@ router.patch ('/:id',getUserById,async (req,res) => {
         res.status(400).json({reponse : error.message})
     }
 })
-//deleting one
+//deleting user
 router.delete ('/:id',getUserById,async (req,res) => {
     try {
         await res.user.remove()
@@ -91,10 +89,10 @@ router.post ('/testphoto',multer,async (req,res) => {
     }
 })
 
-//login Social media (mail only)
+//login Social media
 router.post ('/login',getUserByMail,async(req,res)=>{
     if (res.user == null){
-        return res.status(404).send("Utilisateur introuvable")
+        return res.status(404).send("ce utilisateur n'existe pas")
     }
     try {
         const token = jwt.sign({username: res.user.email}, "SECRET")
@@ -106,12 +104,12 @@ router.post ('/login',getUserByMail,async(req,res)=>{
         
         
     } catch (error) {
-        res.status(400).json({reponse : "mdp incorrect"})
+        res.status(400).json({reponse : "mot de passse incorrect"})
     } 
 })
 
 
-//creating one Using Social Media
+//creating one Using facebook
 router.post ('/FB',multer,async (req,res) => {
     await User.init();
 
@@ -134,7 +132,7 @@ router.post ('/FB',multer,async (req,res) => {
 //Login
 router.post ('/login',getUserByMail,async(req,res)=>{
     if (res.user == null){
-        return res.status(404).send("Utilisateur introuvable")
+        return res.status(404).send("ce utilisateur n'existe pas")
     }
     try {
         if (await Bcrypt.compare(req.body.password,res.user.password)){
@@ -142,19 +140,15 @@ router.post ('/login',getUserByMail,async(req,res)=>{
         if (token){
             res.json({token: token,
             user:res.user,
-            reponse:"good"})
+            reponse:"trouver"})
         }
         }else
         res.json({
-            nom: res.user.nom,
-            prenom: res.user.prenom,
-            email: res.user.email,
-            password: hashedPass,
-            numt: res.user.numt
+            reponse:"non trouver"
         })
         
     } catch (error) {
-        res.status(400).json({reponse : "mdp incorrect"})
+        res.status(400).json({reponse : "mot de passe incorrect"})
     } 
 })
 
@@ -163,7 +157,7 @@ async function getUserById(req,res,next){
     try {
         user = await User.findById(req.params.id)
         if (user == null){
-            return res.status(404).json({reponse : "Utilisateur non trouve"})
+            return res.status(404).json({reponse : "ce utilisateur n'existe pas"})
         }
     } catch (error) {
         return res.status(500).json({reponse: error.message})
@@ -177,7 +171,7 @@ async function getUserByMail (req,res,next){
     try {
         user = await User.findOne({email:req.body.email})
         if (user == null){
-            return res.status(404).json({reponse : "mail non trouve"})
+            return res.status(404).json({reponse : "ce utilisateur n'existe pas"})
         }
 
     } catch (error) {
