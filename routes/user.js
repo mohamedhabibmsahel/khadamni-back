@@ -29,7 +29,9 @@ router.post ('/',multer,async (req,res) => {
         prenom: req.body.prenom,
         email: req.body.email,
         password: hashedPass,
-        numt: req.body.numt
+        numt: req.body.numt,
+       // photoProfil: `${req.protocol}://${req.get('host')}/upload/${req.file.filename}`
+
     })
     try {
         const newUser = await user.save()
