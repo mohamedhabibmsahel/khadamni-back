@@ -16,19 +16,20 @@ const userSchema = new mongoose.Schema({
     password: {
         type: String
     },
-    numt:{
+    phone:{
         unique: true,
         maxlength: 12,
         type: String
     },
-    photoProfil:{
-        type: String,
-        required: false
-    },
     job:{
         type: String,
         required: false
+    },
+    urlImg:{
+        type: String,
+        required: false
     }
+    
     
 })
 

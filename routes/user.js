@@ -23,19 +23,24 @@ router.get ('/:id',authentificateToken,getUserById,(req,res) => {
 //creating user
 router.post ('/',multer,async (req,res) => {
     await User.init();
+
     const hashedPass = await Bcrypt.hash(req.body.password,10)
     const user = new User({
         nom: req.body.nom,
         prenom: req.body.prenom,
         email: req.body.email,
         password: hashedPass,
-        numt: req.body.numt,
-       // photoProfil: `${req.protocol}://${req.get('host')}/upload/${req.file.filename}`
-
+        phone: req.body.phone,
+        job: req.body.job,
+        adresse: req.body.adresse,
+        urlImg: `${req.protocol}://${req.get('host')}/upload/${req.file.filename}`
     })
+
+    
     try {
         const newUser = await user.save()
-        res.status(201).json(newUser)
+        res.status(201).json({user:newUser,
+                            reponse: "good"})
     } catch (error) {
         res.status(400).json({reponse: error.message})
     }
@@ -51,8 +56,8 @@ router.patch ('/:id',getUserById,async (req,res) => {
     if (req.body.email != null){
         res.user.email = req.body.email
     }
-    if (req.body.numt != null){
-        res.user.numt = req.body.numt
+    if (req.body.phone != null){
+        res.user.phone = req.body.phone
     }
     if (req.body.password != null){
         const hashed = Bcrypt.hash(req.body.password)
