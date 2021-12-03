@@ -16,12 +16,12 @@ const userSchema = new mongoose.Schema({
     password: {
         type: String
     },
-    numt:{
+    phone:{
         unique: true,
         maxlength: 12,
         type: String
     },
-    photoProfil:{
+    urlImg:{
         type: String,
         required: false
     },

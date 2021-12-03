@@ -14,10 +14,14 @@ router.get ('/', async (req,res) => {
         res.status(500).json({reponse: error.message})
     }
 }) 
+
+
 //getting one
 router.get ('/:id',authentificateToken,getUserById,(req,res) => {
     res.json(res.user)
 })
+
+
 //creating one
 router.post ('/',multer,async (req,res) => {
     await User.init();
@@ -40,6 +44,9 @@ router.post ('/',multer,async (req,res) => {
         res.status(400).json({reponse: error.message})
     }
 })
+
+
+
 //updating one
 router.patch ('/:id',getUserById,async (req,res) => {
     if (req.body.nom != null){
@@ -68,6 +75,8 @@ router.patch ('/:id',getUserById,async (req,res) => {
         res.status(400).json({reponse : error.message})
     }
 })
+
+
 //deleting one
 router.delete ('/:id',getUserById,async (req,res) => {
     try {
@@ -91,23 +100,48 @@ router.post ('/testphoto',multer,async (req,res) => {
     }
 })
 
+
+
 //login Social media (mail only)
-router.post ('/login',getUserByMail,async(req,res)=>{
-    if (res.user == null){
-        return res.status(404).send("Utilisateur introuvable")
-    }
-    try {
-        const token = jwt.sign({username: res.user.email}, "SECRET")
-        if (token){
-            res.json({token: token,
-            user:res.user,
-            reponse:"good"})
+router.post ('/loginn',async(req,res)=>{
+     // Find client by email
+     User.findOne({email: req.body.email}).then(client => {
+        // Check if client exists
+        if (!client) {
+          return res.status(404).json({ emailnotfound: "Email not found" });
         }
-        
-        
-    } catch (error) {
-        res.status(400).json({reponse : "mdp incorrect"})
-    } 
+      // Check password
+          Bcrypt.compare(req.body.password, client.password).then(isMatch => {
+            if (isMatch) {
+              // client matched
+              // Create JWT Payload
+              const payload = {
+                id: client._id,
+                email : client.email
+              };
+      // Sign token
+              jwt.sign(
+                payload,
+                "secret",
+                {
+                  expiresIn: 31556926 // 1 year in seconds
+                },
+                (err, token) => {
+                  res.json({
+                    success: true,
+                    token:"Bearer "+ token,
+                
+                    id : client._id
+                  });
+                }
+              );
+            } else {
+              return res
+                .status(400)
+                .json({ passwordincorrect: "Password incorrect" });
+            }
+          });
+        });
 })
 
 
@@ -132,30 +166,45 @@ router.post ('/FB',multer,async (req,res) => {
 })
 
 //Login
-router.post ('/login',getUserByMail,async(req,res)=>{
-    if (res.user == null){
-        return res.status(404).send("Utilisateur introuvable")
-    }
-    try {
-        if (await Bcrypt.compare(req.body.password,res.user.password)){
-        const token = jwt.sign({username: res.user.email}, "SECRET")
-        if (token){
-            res.json({token: token,
-            user:res.user,
-            reponse:"good"})
+router.post ('/login',async(req,res)=>{
+     // Find client by email
+     User.findOne({email: req.body.email}).then(client => {
+        // Check if client exists
+        if (!client) {
+          return res.status(404).json({ emailnotfound: "Email not found" });
         }
-        }else
-        res.json({
-            nom: res.user.nom,
-            prenom: res.user.prenom,
-            email: res.user.email,
-            password: hashedPass,
-            numt: res.user.numt
-        })
-        
-    } catch (error) {
-        res.status(400).json({reponse : "mdp incorrect"})
-    } 
+      // Check password
+          Bcrypt.compare(req.body.password, client.password).then(isMatch => {
+            if (isMatch) {
+              // client matched
+              // Create JWT Payload
+              const payload = {
+                id: client._id,
+                email : client.email
+              };
+      // Sign token
+              jwt.sign(
+                payload,
+                "secret",
+                {
+                  expiresIn: 31556926 // 1 year in seconds
+                },
+                (err, token) => {
+                  res.json({
+                    success: true,
+                    token:"Bearer "+ token,
+                
+                    id : client._id
+                  });
+                }
+              );
+            } else {
+              return res
+                .status(400)
+                .json({ passwordincorrect: "Password incorrect" });
+            }
+          });
+        });
 })
 
 async function getUserById(req,res,next){
