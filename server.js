@@ -37,4 +37,7 @@ app.use(clientPassport.initialize());
 
 require('./app/routes/user.routes.js')(app);
 
+require('./app/routes/job.routes.js')(app);
+
+
 
