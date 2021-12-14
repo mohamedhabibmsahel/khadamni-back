@@ -39,5 +39,6 @@ require('./app/routes/user.routes.js')(app);
 
 require('./app/routes/job.routes.js')(app);
 
+require('./app/routes/msg.routes.js')(app);
 
 
