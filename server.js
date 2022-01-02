@@ -16,8 +16,9 @@ app.use(express.json())
 
 app.use('/upload',express.static(path.join(__dirname,'upload')))
 
-const userRoute = require('./routes/user')
-app.use('/user',userRoute)
 
 
+require('./routes/user.routes.js')(app);
 app.listen(3000, () => console.log("Server Started"))
+
+
