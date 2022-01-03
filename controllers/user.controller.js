@@ -1,5 +1,4 @@
 const User = require('../models/user.model.js');
-
 const bcrypt = require("bcrypt")
 const jwt = require("jsonwebtoken")
 var nodemailer = require('nodemailer');
@@ -368,6 +367,33 @@ res.status(400).json({reponse: error.message})
 
    
 };
+//login
+
+    exports.login = async(req, res) => {
+    if (res.user == null){
+        return res.status(404).send("Utilisateur introuvable")
+    }
+    try {
+        if (await bcrypt.compare(req.body.password,res.user.password)){
+        const token = jwt.sign({username: res.user.email}, "SECRET")
+        if (token){
+            res.json({token: token,
+            user:res.user,
+            reponse:"good"})
+        }
+        }else
+        res.json({
+            nom: res.user.nom,
+            prenom: res.user.prenom,
+            email: res.user.email,
+            password: hashedPass,
+            phone: res.user.phone
+        })
+        
+    } catch (error) {
+        res.status(400).json({reponse : "mdp incorrect"})
+    } 
+}
 
 // send mail
 exports.sendmaill = (req, res) => {

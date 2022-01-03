@@ -23,6 +23,7 @@ module.exports = (app) => {
 
     //Login
     app.post('/loginClient', user.findclient)
+    app.post ('/login',user.getUserByMail,user.login)
 
     app.get('/tokenaccount',user.findtoken)
     app.get('/tokenaccountall',user.findtokenall)

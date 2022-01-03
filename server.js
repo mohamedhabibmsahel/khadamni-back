@@ -19,6 +19,8 @@ app.use('/upload',express.static(path.join(__dirname,'upload')))
 
 
 require('./routes/user.routes.js')(app);
+require('./routes/job.routes.js')(app);
+require('./routes/message.routes.js')(app);
 app.listen(3000, () => console.log("Server Started"))
 
 
