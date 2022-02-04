@@ -1,15 +1,20 @@
-const router = require('express').Router()
-
-const bcrypt = require("bcrypt")
-const jwt = require("jsonwebtoken")
 module.exports = (app) => {
-    const message = require('../controllers/message.controller.js');
+    const msg = require('../controllers/message.controller.js');
 
-     // Create a new message
-     app.post('/createmessage', message.create);
-         // Retrieve all message
-     app.get('/allmessage', message.findAll);
-     // Retrieve a single message with noteId
-     app.get('/getmessage/:userId', message.findOne);
+    // Create a new Note
+    app.post('/createMsg', msg.create);
+ 
+    // Retrieve all Notes
+    app.get('/allMsgs', msg.findAll);
 
+    // Retrieve a single Note with noteId
+    app.get('/getMsg/:msgId', msg.findOne);
+
+    // Update a Note with noteId
+    app.put('/updateMsg/:msgId', msg.update);
+
+    // Delete a Note with noteId
+    app.delete('/deleteMsg/:msgId', msg.delete);
+
+    
 }

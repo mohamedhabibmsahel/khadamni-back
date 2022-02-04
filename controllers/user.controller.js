@@ -4,21 +4,24 @@ const jwt = require("jsonwebtoken")
 var nodemailer = require('nodemailer');
 const Nexmo = require('nexmo');
 const saltRounds = 10;
+const Token = require('../models/Token');
 // Create and Save a new Note
 
 //router.post ('/',multer,async (req,res) => {
     exports.create = async(req, res) => {
     await User.init();
-    const photoCloudinary = await cloudinary.uploader.upload(req.file.path)
 
-    const hashedPass = await Bcrypt.hash(req.body.password,10)
+
+    const hashedPass = await bcrypt.hash(req.body.password,10)
     const user = new User({
-        nom: req.body.nom,
-        prenom: req.body.prenom,
-        email: req.body.email,
-        password: hashedPass,
-        numt: req.body.numt,
-        photoProfil: photoCloudinary.url
+        nom : req.body.nom || "Untitled Note",
+                prenom : req.body.prenom ,
+                email :req.body.email ,
+                password :req.body.password ,
+                phone :req.body.phone ,
+                address :req.body.address,
+                job :req.body.job,
+                urlImg : `${req.protocol}://${req.get('host')}/upload/${req.file.filename}`
     })
 
     
@@ -32,44 +35,91 @@ const saltRounds = 10;
         res.status(400).json({reponse: error.message})
     }
 }
-exports.create = (req, res) => {
-    // Validate request
-    if(!req.body.nom) {
-        return res.status(400).send({
-            message: "User content can not be empty"
-        });
-    }
+// exports.create = (req, res) => {
+//     // Validate request
+//     if(!req.body.nom) {
+//         return res.status(400).send({
+//             message: "User content can not be empty"
+//         });
+//     }
   
 
 
-    // Create a Note
-    let newuser = new User({
-        nom : req.body.nom || "Untitled Note",
-        prenom : req.body.prenom ,
-        email :req.body.email ,
-        password :req.body.password ,
-        phone :req.body.phone ,
-        address :req.body.address,
-        job :req.body.job,
-        urlImg : `${req.protocol}://${req.get('host')}/upload/${req.file.filename}`
+//     // Create a Note
+//     let newuser = new User({
+//         nom : req.body.nom || "Untitled Note",
+//         prenom : req.body.prenom ,
+//         email :req.body.email ,
+//         password :req.body.password ,
+//         phone :req.body.phone ,
+//         address :req.body.address,
+//         job :req.body.job,
+//         urlImg : `${req.protocol}://${req.get('host')}/upload/${req.file.filename}`
 
-    });
-    console.log(newuser.urlImg)
-// Hash password before saving in database
-bcrypt.genSalt(10, (err, salt) => {
-    bcrypt.hash(newuser.password, salt, (err, hash) => {
-      if (err) throw err;
-      newuser.password= hash;
-      newuser.save()
+//     });
+//     console.log(newuser.urlImg)
+// // Hash password before saving in database
+// bcrypt.genSalt(10, (err, salt) => {
+//     bcrypt.hash(newuser.password, salt, (err, hash) => {
+//       if (err) throw err;
+//       newuser.password= hash;
+//       newuser.save()
         
-        .then(client => res.json({user:client}))
-        .catch(err => console.log(err));
-    });
-  });
+//         .then(client => res.json({user:client}))
+//         .catch(err => console.log(err));
+//     });
+//   });
   
   
-};
+// };
+//forgotpassword
+exports.forgotPassword = async(req, res,next) => {
 
+    // user is not found into database
+    if (!res.user) {
+        return res.status(400).send({ msg: 'We were unable to find a user with that email. Make sure your Email is correct!' });
+    } else {
+        var seq = (Math.floor(Math.random() * 10000) + 10000).toString().substring(1);
+        var token = new Token({ email: res.user.email, token: seq });
+        token.save(function (err) {
+            if (err) {
+                return res.status(500).send({ msg: err.message });
+            }
+
+        });
+
+        var smtpTrans = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: 'fanart3a18@gmail.com',
+                pass: '3A18java123'
+            }
+        });
+
+        var mailOptions = {
+            from: 'fanart3a18@gmail.com', to: res.user.email, subject:
+                'Mot de passe oubliè khadamni', text: 'Vous recevez cet email car vous (ou quelqu\'n d\'autre) a fait cette demande de mot de passe oubliè.\n\n' +
+                    'Merci de cliquer sur le lien suivant ou copier le sur votre navigateur pour completer le processus:\n\n' + 'Le code est :'+ token.token + '\n\n' +
+                    '\n\n Si vous n\'avez pas fait cette requete, veuillez ignorer ce message et votre mot de passe sera le méme.\n'
+        };
+        // Send email (use credintials of SendGrid)
+
+        //  var mailOptions = { from: 'no-reply@example.com', to: user.email, subject: 'Account Verification Link', text: 'Hello '+ user.name +',\n\n' + 'Please verify your account by clicking the link: \nhttp:\/\/' + req.headers.host + '\/confirmation\/' + user.email + '\/' + token.token + '\n\nThank You!\n' };
+        smtpTrans.sendMail(mailOptions, function (err) {
+            if (err) {
+                return res.status(500).send({ msg: err });
+            }
+            else {
+                return res.status(200).send({succes:true, 
+                    msg:'A reset password  email has been sent to ' + res.user.email + '. It will be expire after one day. If you not get verification Email click on resend token.',
+                    token: token.token
+                })};
+
+        });
+
+    }
+
+}
 // Retrieve and return all notes from the database.
 exports.findAll = (req, res) => {
     User.find()
@@ -162,9 +212,32 @@ exports.update = (req, res) => {
         });
     });
 };
-
+//get user by id
+    exports.getUserById = async(req, res,next) => {
+    let user
+    try {
+        user = await User.findById(req.params.id)
+        if (user == null){
+            return res.status(404).json({reponse : "Utilisateur non trouve"})
+        }
+    } catch (error) {
+        return res.status(500).json({reponse: error.message})
+    }
+    res.user = user
+    next()
+}
 // Delete a note with the specified noteId in the request
-exports.delete = (req, res) => {
+//router.delete ('/:id',getUserById,async (req,res) => {
+    exports.delete = async(req, res) => {
+    try {
+        //delete the user
+         await res.user.remove()
+         res.json({reponse : "Supprime avec succes"})
+    } catch (error) {
+        res.json({erreur : error.message})
+    }
+}
+/* exports.delete = (req, res) => {
     User.findByIdAndRemove(req.params.userId)
     .then(note => {
         if(!note) {
@@ -184,7 +257,7 @@ exports.delete = (req, res) => {
         });
     });
 };
-
+*/
 
 // Find a single note with a noteId
 exports.findclient = (req, res) => {
@@ -394,7 +467,44 @@ res.status(400).json({reponse: error.message})
         res.status(400).json({reponse : "mdp incorrect"})
     } 
 }
+//resestpassword
 
+
+    exports.resetPassword = async(req, res,next) => {
+    Token.findOne({ token: req.params.token }, function (err, token) {
+        // token is not found into database i.e. token may have expired 
+        if (!token) {
+            return res.status(400).send({ msg: 'Your verification link may have expired. Please click on resend for verify your Email.' });
+        }
+        // if token is found then check valid user 
+        else {
+            User.findOne({email: req.params.email }, async function (err, user) {
+                // not valid user
+                if (!user) {
+                    return res.status(401).send({ msg: 'We were unable to find a user for this verification. Please SignUp!' });
+                } else {
+
+                    const salt = await bcrypt.genSalt(10);
+                    user.password = await bcrypt.hash(req.body.Password, salt);
+
+                    user.save(function (err) {
+                        // error occur
+                        if (err) {
+                            return res.status(500).send({ msg: err.message });
+                        }
+                        // account successfully verified
+                        else {
+                            return res.status(200).json({reponse:'Your password has been successfully reset'});
+                        }
+
+                    })
+
+                }
+
+            });
+        }});
+
+    }
 // send mail
 exports.sendmaill = (req, res) => {
    

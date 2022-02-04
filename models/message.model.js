@@ -1,12 +1,11 @@
 const mongoose = require('mongoose');
 
-const MessageSchema = mongoose.Schema({
-    from: String,
-    to: String,
+const MsgSchema = mongoose.Schema({
+    nom: String,
     description: String,
-    time:Date
+    img: String
 }, {
     timestamps: true
 });
 
-module.exports = mongoose.model('message', MessageSchema);
+module.exports = mongoose.model('msg', MsgSchema);

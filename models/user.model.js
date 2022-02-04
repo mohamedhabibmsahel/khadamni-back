@@ -1,3 +1,4 @@
+const { string } = require('assert-plus');
 const mongoose = require('mongoose');
 
 const UserSchema = mongoose.Schema({
@@ -8,7 +9,10 @@ const UserSchema = mongoose.Schema({
         unique:true
     },
     password:String,
-    phone:String,
+    phone:{
+        type:String,
+        unique :true
+    },
     address:String,
     job:String,
     urlImg:String

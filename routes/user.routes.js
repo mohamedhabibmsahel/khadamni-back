@@ -8,6 +8,9 @@ module.exports = (app) => {
     // Create a new Note
     app.post('/createuser', multer,user.create);
     app.post('/socialmedia',multer,user.socialmedia);
+    //forgetpassword
+    app.post('/forgotPassword',user.getUserByMail,user.forgotPassword) 
+    app.post('/resetPassword/:email/:token' ,user.resetPassword) 
  
     // Retrieve all Notes
     app.get('/allusers', user.findAll);
@@ -19,7 +22,8 @@ module.exports = (app) => {
     app.put('/updateuser/:userId', multer,user.update);
 
     // Delete a Note with noteId
-    app.delete('/deleteuser/:userId', user.delete);
+    //app.delete('/deleteuser/:userId', user.delete);
+    app.delete ('/deleteuser/:id',user.getUserById,user.delete);
 
     //Login
     app.post('/loginClient', user.findclient)
@@ -30,6 +34,7 @@ module.exports = (app) => {
 
     app.get('/getuserEmail/:Email', user.findOneEmail);
     app.get('/getUserByMail/:Email', user.getUserByMail);
+    app.get ('/getUserById/:id', user.getUserById );
     
 
     app.post('/sendmail',user.sendmaill)
