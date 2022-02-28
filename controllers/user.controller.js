@@ -17,7 +17,7 @@ const Token = require('../models/Token');
         nom : req.body.nom || "Untitled Note",
                 prenom : req.body.prenom ,
                 email :req.body.email ,
-                password :req.body.password ,
+                password :hashedPass,
                 phone :req.body.phone ,
                 address :req.body.address,
                 job :req.body.job,
@@ -447,6 +447,9 @@ res.status(400).json({reponse: error.message})
         return res.status(404).send("Utilisateur introuvable")
     }
     try {
+        console.log(req.body.password)
+        console.log(res.user.password)
+
         if (await bcrypt.compare(req.body.password,res.user.password)){
         const token = jwt.sign({username: res.user.email}, "SECRET")
         if (token){

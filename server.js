@@ -17,7 +17,8 @@ app.use(express.json())
 app.use('/upload',express.static(path.join(__dirname,'upload')))
 
 
-
+const reportRoute = require('./controllers/report')
+app.use('/report',reportRoute)
 require('./routes/user.routes.js')(app);
 require('./routes/job.routes.js')(app);
 require('./routes/message.routes.js')(app);

@@ -1,4 +1,4 @@
-const User = require('../models/job.model.js');
+const Job = require('../models/job.model.js');
 
 const bcrypt = require("bcrypt")
 const jwt = require("jsonwebtoken")
@@ -7,27 +7,20 @@ const Nexmo = require('nexmo');
 const saltRounds = 10;
 // Create and Save a new Note
 exports.create = (req, res) => {
-    // Validate request
-    if(!req.body.nom) {
-        return res.status(400).send({
-            message: "job content can not be empty"
-        });
-    }
+   
   
     // Create a Note
-    let newuser = new User({
+    let newJob =   new Job({
        
-    nom: req.body.nom,
-    description: req.body.description,
-    price: req.body.price,
-    time: req.body.time,
-    idClient:req.body.idClient
+    ...req.body
+   
+
         
     });
  // Save Note in the database
- newuser.save()
+ newJob.save()
  .then(data => {
-     res.send(data);
+     res.json({data:data});
  }).catch(err => {
      res.status(500).send({
          message: err.message || "Some error occurred while creating the user."
@@ -36,8 +29,9 @@ exports.create = (req, res) => {
 };
 
 // Retrieve and return all notes from the database.
-exports.findAll = (req, res) => {
-    User.find()
+exports.findAll = async (req, res) => {
+   
+    Job.find()
     .then(users => {
         res.send(users);
     }).catch(err => {
@@ -49,7 +43,7 @@ exports.findAll = (req, res) => {
 
 // Find a single note with a noteId
 exports.findOne = (req, res) => {
-    User.findById(req.params.jobId)
+    Job.findById(req.params.jobId)
     .then(note => {
         if(!note) {
             return res.status(404).send({
@@ -80,13 +74,14 @@ exports.update = (req, res) => {
   
     
     // Find note and update it with the request body
-    User.findByIdAndUpdate(req.params.jobId, {
+    Job.findByIdAndUpdate(req.params.jobId, {
           
     nom: req.body.nom,
     description: req.body.description,
     price: req.body.price,
     time: req.body.time,
-    idClient:req.body.idClient
+    idClient:req.body.idClient,
+    idto:req.body.idto
     }, {new: true})
     .then(note => {
         if(!note) {
@@ -110,7 +105,7 @@ exports.update = (req, res) => {
 
 // Delete a note with the specified noteId in the request
 exports.delete = (req, res) => {
-    User.findByIdAndRemove(req.params.jobId)
+    Job.findByIdAndRemove(req.params.jobId)
     .then(note => {
         if(!note) {
             return res.status(404).send({
