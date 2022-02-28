@@ -25,7 +25,7 @@ router.post ('/',getReport,async (req,res) => {
             })
             const nami = await newReport.save()
             return res.json(nami)
-        }else if (res.report.user.length == 5){
+        }else if (res.report.user.length == 2){
             await res.report.remove()
             try {
                 const articleSupprime = await Job.findById(req.body.job)
