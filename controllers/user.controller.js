@@ -21,7 +21,7 @@ const Token = require('../models/Token');
                 phone :req.body.phone ,
                 address :req.body.address,
                 job :req.body.job,
-                urlImg : `${req.protocol}://${req.get('host')}/upload/${req.file.filename}`
+                //urlImg : `${req.protocol}://${req.get('host')}/upload/${req.file.filename}`
     })
 
     
@@ -92,7 +92,7 @@ exports.forgotPassword = async(req, res,next) => {
             service: 'gmail',
             auth: {
                 user: 'fanart3a18@gmail.com',
-                pass: '3A18java123'
+                pass: 'Nf9rwxfbMohamedmalek93!'
             }
         });
 
@@ -442,36 +442,61 @@ res.status(400).json({reponse: error.message})
 };
 //login
 
-    exports.login = async(req, res) => {
+   /* exports.login = async(req, res) => {
     if (res.user == null){
         return res.status(404).send("Utilisateur introuvable")
     }
-    try {
-        console.log(req.body.password)
-        console.log(res.user.password)
+        try {
+            if (await bcrypt.compare(req.body.password,res.user.password)){
+                const token = jwt.sign({username: res.user.email}, "SECRET")
+                if (token){
+                    res.status(201).json({token: token,
+                    user:res.user,
+                    reponse:"good"})
+                }
+            }else{
+                res.status(201).json({
+                user:res.user
+                }) 
+                console.log(res.user)
+            }  
+        } catch (error) {
+            res.status(400).json({reponse : "mdp incorrect"})
+        } 
+    }*/
+exports.login = async(req, res) => {
+if (res.user == null) {
+    return res.status(404).send("Utilisateur introuvable")
+  }
+  try {
+    console.log(req.body.password)
+    console.log(res.user.password)
 
-        if (await bcrypt.compare(req.body.password,res.user.password)){
-        const token = jwt.sign({username: res.user.email}, "SECRET")
-        if (token){
-            res.json({token: token,
-            user:res.user,
-            reponse:"good"})
-        }
-        }else
+    if (await bcrypt.compare(req.body.password, res.user.password)) {
+      const token = jwt.sign({ email: res.user.email }, "SECRET")
+      if (token) {
         res.json({
-            nom: res.user.nom,
-            prenom: res.user.prenom,
-            email: res.user.email,
-            password: hashedPass,
-            phone: res.user.phone
+          token: token,
+          user: res.user,
+          reponse: "Success"
         })
-        
-    } catch (error) {
-        res.status(400).json({reponse : "mdp incorrect"})
-    } 
+      }
+    } else
+      res.json({
+        nom: res.user.nom,
+        prenom: res.user.prenom,
+        email: res.user.email,
+        password: hashedPass,
+        phone: res.user.phone,
+        address: res.user.address,
+        job: res.user.job
+      })
+
+  } catch (error) {
+    res.status(400).json({ reponse: "mdp incorrect" })
+  }
 }
 //resestpassword
-
 
     exports.resetPassword = async(req, res,next) => {
     Token.findOne({ token: req.params.token }, function (err, token) {

@@ -1,4 +1,3 @@
-const { string } = require('assert-plus');
 const mongoose = require('mongoose');
 
 const UserSchema = mongoose.Schema({
