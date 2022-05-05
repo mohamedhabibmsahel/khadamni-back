@@ -10,7 +10,7 @@ module.exports = (app) => {
     app.post('/socialmedia',multer,user.socialmedia);
     //forgetpassword
     app.post('/forgotPassword',user.getUserByMail,user.forgotPassword) 
-    app.post('/resetPassword/:email/:token' ,user.resetPassword) 
+    app.post('/resetPassword' ,user.resetPassword) 
  
     // Retrieve all Notes
     app.get('/allusers', user.findAll);

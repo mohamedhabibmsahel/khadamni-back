@@ -21,7 +21,7 @@ const Token = require('../models/Token');
                 phone :req.body.phone ,
                 address :req.body.address,
                 job :req.body.job,
-                urlImg : `${req.protocol}://${req.get('host')}/upload/${req.file.filename}`
+                //urlImg : `${req.protocol}://${req.get('host')}/upload/${req.file.filename}`
     })
 
     
@@ -77,6 +77,57 @@ exports.forgotPassword = async(req, res,next) => {
 
     // user is not found into database
     if (!res.user) {
+      return res.status(400).send({ msg: 'The email entred was not found by our system. Make sure your Email is correct!' });
+    } else {
+      var seq = (Math.floor(Math.random() * 10000) + 10000).toString().substring(1);
+      var token = new Token({ email: res.user.email, token: seq });
+      token.save(function (err) {
+        if (err) {
+          return res.status(500).send({ msg: err.message });
+        }
+  
+      });
+  
+      var smtpTrans = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: "gbhy1919@gmail.com",
+          pass: "hellsinghakuda147"
+        }
+      });
+  
+      var mailOptions = {
+        from: 'gbhy1919@gmail.com', to: res.user.email, subject:
+          'Reset Password', text: 'You receive this email from Khadamni application bellow you will find a link please click on it\n\n' +
+            'The code is  :' + token.token + '\n\n' +
+            'http:\/\/' + req.headers.host + '\/users\/resetPassword\/' + res.user.email + '\/' + token.token
+            + '\n\n Si vous n\'avez pas fait cette requete, veuillez ignorer ce message et votre mot de passe sera le méme.\n'
+      };
+      // Send email (use credintials of SendGrid)
+  
+      console.log(token.token)
+      //  var mailOptions = { from: 'no-reply@example.com', to: user.email, subject: 'Account Verification Link', text: 'Hello '+ user.name +',\n\n' + 'Please verify your account by clicking the link: \nhttp:\/\/' + req.headers.host + '\/confirmation\/' + user.email + '\/' + token.token + '\n\nThank You!\n' };
+      smtpTrans.sendMail(mailOptions, function (err) {
+        if (err) {
+          return res.status(500).send({ msg: err });
+        }
+        else {
+          return res.status(200).send({
+            succes: true,
+            msg: 'A reset password  email has been sent to ' + res.user.email + '. It will be expire after one day. ',
+            token: token.token
+          })
+        };
+  
+      });
+  
+    }
+  
+  }
+/*exports.forgotPassword = async(req, res,next) => {
+
+    // user is not found into database
+    if (!res.user) {
         return res.status(400).send({ msg: 'We were unable to find a user with that email. Make sure your Email is correct!' });
     } else {
         var seq = (Math.floor(Math.random() * 10000) + 10000).toString().substring(1);
@@ -92,7 +143,7 @@ exports.forgotPassword = async(req, res,next) => {
             service: 'gmail',
             auth: {
                 user: 'fanart3a18@gmail.com',
-                pass: '3A18java123'
+                pass: 'Nf9rwxfbMohamedmalek93!'
             }
         });
 
@@ -119,11 +170,13 @@ exports.forgotPassword = async(req, res,next) => {
 
     }
 
-}
+}*/
 // Retrieve and return all notes from the database.
 exports.findAll = (req, res) => {
+    console.log()
     User.find()
     .then(users => {
+        console.log("users:"+users)
         res.json({users:users});
     }).catch(err => {
         res.status(500).send({
@@ -164,7 +217,7 @@ exports.findOneEmail = (req, res, next) => {
             return res.status(404).send({
                 message: "user not found with email " + req.params.Email
             });            
-        }
+        }x
         res.send(note);
     })
     .catch(err => {
@@ -442,37 +495,108 @@ res.status(400).json({reponse: error.message})
 };
 //login
 
-    exports.login = async(req, res) => {
+   /* exports.login = async(req, res) => {
     if (res.user == null){
         return res.status(404).send("Utilisateur introuvable")
     }
-    try {
-        console.log(req.body.password)
-        console.log(res.user.password)
+        try {
+            if (await bcrypt.compare(req.body.password,res.user.password)){
+                const token = jwt.sign({username: res.user.email}, "SECRET")
+                if (token){
+                    res.status(201).json({token: token,
+                    user:res.user,
+                    reponse:"good"})
+                }
+            }else{
+                res.status(201).json({
+                user:res.user
+                }) 
+                console.log(res.user)
+            }  
+        } catch (error) {
+            res.status(400).json({reponse : "mdp incorrect"})
+        } 
+    }*/
+exports.login = async(req, res) => {
+if (res.user == null) {
+    return res.status(404).send("Utilisateur introuvable")
+  }
+  try {
+    console.log(req.body.password)
+    console.log(res.user.password)
 
-        if (await bcrypt.compare(req.body.password,res.user.password)){
-        const token = jwt.sign({username: res.user.email}, "SECRET")
-        if (token){
-            res.json({token: token,
-            user:res.user,
-            reponse:"good"})
-        }
-        }else
+    if (await bcrypt.compare(req.body.password, res.user.password)) {
+      const token = jwt.sign({ email: res.user.email }, "SECRET")
+      if (token) {
         res.json({
-            nom: res.user.nom,
-            prenom: res.user.prenom,
-            email: res.user.email,
-            password: hashedPass,
-            phone: res.user.phone
+          token: token,
+          user: res.user,
+          reponse: "Success"
         })
-        
-    } catch (error) {
-        res.status(400).json({reponse : "mdp incorrect"})
-    } 
+      }
+    } else
+      res.json({
+        nom: res.user.nom,
+        prenom: res.user.prenom,
+        email: res.user.email,
+        password: hashedPass,
+        phone: res.user.phone,
+        address: res.user.address,
+        job: res.user.job,
+        urlImg: res.user.urlImg
+      })
+
+  } catch (error) {
+    res.status(400).json({ reponse: "mdp incorrect" })
+  }
 }
 //resestpassword
-
-
+exports.resetPassword = async(req, res,next) => {
+    console.log("Ena body")
+    console.log("Ena body" + req.body.email)
+  
+    console.log("Ena pass" + req.body.password)
+    Token.findOne({ token: req.body.token }, function (err, token) {
+      // token is not found into database i.e. token may have expired 
+      if (!token) {
+        return res.status(400).send({ msg: 'Your verification link may have expired. Please click on resend for verify your Email.' });
+      }
+      // if token is found then check valid user 
+      else {
+        User.findOne({ email: req.body.email }, async function (err, user) {
+          // not valid user
+          if (!user) {
+            return res.status(401).send({ msg: 'We were unable to find a user for this verification. Please SignUp!' });
+          } else {
+  
+            const salt = await bcrypt.genSalt(10);
+            console.log(salt)
+            console.log(req.body.password, "This is the pass")
+            const hashedp = await bcrypt.hash(req.body.password, salt);
+  
+  
+            user.password = hashedp
+  
+            user.save(function (err) {
+              // error occur
+              if (err) {
+                return res.status(500).send({ msg: err.message });
+              }
+              // account successfully verified
+              else {
+                return res.status(200).json({ msg: 'Your password has been successfully reset' });
+              }
+  
+            })
+  
+          }
+  
+        });
+      }
+    });
+  
+  }
+/*
     exports.resetPassword = async(req, res,next) => {
     Token.findOne({ token: req.params.token }, function (err, token) {
         // token is not found into database i.e. token may have expired 
@@ -507,7 +631,7 @@ res.status(400).json({reponse: error.message})
             });
         }});
 
-    }
+    }*/
 // send mail
 exports.sendmaill = (req, res) => {
    
