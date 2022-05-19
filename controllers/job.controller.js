@@ -20,7 +20,7 @@ exports.create = (req, res) => {
  // Save Note in the database
  newJob.save()
  .then(data => {
-     res.json({data:data});
+     res.json(data);
  }).catch(err => {
      res.status(500).send({
          message: err.message || "Some error occurred while creating the user."
@@ -66,22 +66,14 @@ exports.findOne = (req, res) => {
 // Update a note identified by the noteId in the request
 exports.update = (req, res) => {
     // Validate Request
-    if(!req.body.nom) {
-        return res.status(400).send({
-            message: "Note content can not be empty"
-        });
-    }
+
   
     
     // Find note and update it with the request body
     Job.findByIdAndUpdate(req.params.jobId, {
           
-    nom: req.body.nom,
-    description: req.body.description,
-    price: req.body.price,
-    time: req.body.time,
-    idClient:req.body.idClient,
-    idto:req.body.idto
+ 
+        ...req.body
     }, {new: true})
     .then(note => {
         if(!note) {

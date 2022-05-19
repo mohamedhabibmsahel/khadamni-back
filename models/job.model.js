@@ -10,7 +10,8 @@ const JobSchema = mongoose.Schema({
         ref: 'user'
     },
     price:Number,
-    description:String
+    description:String,
+    accepted:Boolean
 }, {
     timestamps: true
 });

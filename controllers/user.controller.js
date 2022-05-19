@@ -3,31 +3,237 @@ const bcrypt = require("bcrypt")
 const jwt = require("jsonwebtoken")
 var nodemailer = require('nodemailer');
 const Nexmo = require('nexmo');
+var cloudinary = require('../middleware/cloudinary')
 const saltRounds = 10;
 const Token = require('../models/Token');
+const picsPath = require("path").resolve(__dirname, "../upload");
+
 // Create and Save a new Note
 
 //router.post ('/',multer,async (req,res) => {
     exports.create = async(req, res) => {
     await User.init();
-
-
     const hashedPass = await bcrypt.hash(req.body.password,10)
+    console.log(req.body)
+    if (req.file != null) {
+        const photoCloudinary = await cloudinary.uploader.upload(req.file.path)
+        //const photoCloudinary = await cloudinary.uploader.upload(req.file.filename)
+        req.body.urlImg = photoCloudinary.url
+      } else {
+        req.body.urlImg  = "https://res.cloudinary.com/dy05x9auh/image/upload/v1648226974/athlete_lxnnu3.png"
+      }
     const user = new User({
-        nom : req.body.nom || "Untitled Note",
-                prenom : req.body.prenom ,
-                email :req.body.email ,
-                password :hashedPass,
-                phone :req.body.phone ,
-                address :req.body.address,
-                job :req.body.job,
-                //urlImg : `${req.protocol}://${req.get('host')}/upload/${req.file.filename}`
+        ...req.body,
+                password :hashedPass,              
     })
-
-    
     try {
         const newUser = await user.save()
         const tokenJWT = jwt.sign({username: req.body.email}, "SECRET")
+        var smtpTrans = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+              user: "m'sahel.mohamedhabib@esprit.tn",
+              pass: process.env.EMAIL_MDP
+            }
+          });
+          var mailOptions = {
+            from: "m'sahel.mohamedhabib@esprit.tn",
+            to: req.body.email,
+            subject:'Welcome To KHADAMNI',
+           /* text: 'You receive this email from Khadamni application bellow you will find a link please click on it\n\n' +
+                'The code is  :' + token.token + '\n\n' +
+                'http:\/\/' + req.headers.host + '\/users\/resetPassword\/' + res.user.email + '\/' + token.token
+                + '\n\n Si vous n\'avez pas fait cette requete, veuillez ignorer ce message et votre mot de passe sera le méme.\n'*/
+                html:  '<div class="es-wrapper-color">'+
+                '<table class="es-wrapper" width="100%" cellspacing="0" cellpadding="0">'+
+                //HEADER
+                '<tbody>'+
+                    '<tr>'+
+                '<td class="esd-structure es-p20t es-p20b es-p20r es-p20l" style="background-color: #3d5ca3;" bgcolor="#3d5ca3" align="left">'+
+                '<table class="es-left" cellspacing="0" cellpadding="0" align="center">'+
+                '<tbody>'+
+                    '<tr>'+
+                    '<td class="es-m-p20b esd-container-frame" width="270" align="left">'+
+                        '<table width="100%" cellspacing="0" cellpadding="0">'+
+                            '<tbody>'+
+                                '<tr>'+
+                                    '<td class="esd-block-image es-m-p0l es-m-txt-c" align="center" style="font-size: 0px;padding: 20px">'+
+                                        '<a href="https://www.facebook.com/Khadamni-100921899214016/" target="_blank"><img src="https://fv9-6.failiem.lv/thumb_show.php?i=26a9n6fcj&view" alt style="display: block; border-radius: 8px;" width="183"></a>'+
+                                    '</td>'+
+                                '</tr>'+
+                            '</tbody>'+
+                        '</table>'+
+                    '</td>'+
+               ' </tr>'+
+            '</tbody>'+
+        '</table>'+
+    '</td>'+
+                //container 
+                '<tbody>'+
+                    '<tr>'+
+                '<td class="esd-structure es-p40t es-p20r es-p20l" style="background-color: transparent;" bgcolor="transparent" align="left">'+
+                '<table width="100%" cellspacing="0" cellpadding="0">'+
+                    '<tbody>'+
+                        '<tr>'+
+                            '<td class="esd-container-frame" width="560" valign="top" align="center">'+
+                                '<table style="background-position: left top;" width="100%" cellspacing="0" cellpadding="0">'+
+                                   '<tbody>'+
+                                        '<tr>'+
+                                            '<td align="center" style="font-size:0; ">'+
+                                                '<a target="_blank"><img src="https://tlr.stripocdn.email/content/guids/CABINET_9cca54ddac8a1c025f5b3dfe3803ecaa/images/72091609237168348.png" alt style="display: block;max-width: 100%;height: auto;" ></a>'+
+                                            '</td>'+
+                                        '</tr>'+
+                                        '<tr>'+
+                                            '<td class="esd-block-text es-p15t es-p15b" align="center">'+
+                                                '<h1 style="color: #333333; font-size: 20px;"><strong>We are glad you were registered! </strong></h1>'+
+                                            '</td>'+
+                                        '</tr>'+
+                                        '<tr>'+
+                                            '<td class="esd-block-text es-p40r es-p40l" align="center">'+
+                                            '<p>HI,'+req.body.nom+' '+req.body.prenom+'</p>'+
+                                            '</td>'+
+                                        '</tr>'+
+                                       '<tr>'+
+                                            '<td class="esd-block-text es-p35r es-p40l" align="left">'+
+                                                '<p style="text-align: center;">Welcome to our family!Thank you for joining Us</p>'+
+                                            '</td>'+
+                                        '</tr>'+
+                                        '<tr>'+
+                                            '<td class="esd-block-text es-p25t es-p40r es-p40l" align="center">'+
+                                                '<p>Don\'t worry Khadamni will help you so much in your life</p>'+
+                                            '</td>'+
+                                        '</tr>'+
+                                        '<tr>'+
+                                            '<td class="esd-block-text es-p25t es-p40r es-p40l" align="center">'+
+                                                '<p>Have a nice day</p>'+
+                                            '</td>'+
+                                        '</tr>'+
+                                    '</tbody>'+
+                                '</table>'+
+                           '</td>'+
+                        '</tr>'+
+                    '</tbody>'+
+                '</table>'+
+            '</td>'+
+            //follow us
+            '<tbody>'+
+            '<tr>'+
+            '<td class="esd-structure es-p20t es-p10r es-p10l" align="left">'+
+        '<table class="es-left" cellspacing="0" cellpadding="0" align="left">'+
+            '<tbody>'+
+                '<tr>'+
+                    '<td class="esd-container-frame" width="199" align="left">'+
+                        '<table style="background-position: center center;" width="100%" cellspacing="0" cellpadding="0">'+
+                            '<tbody>'+
+                                '<tr>'+
+                                    '<td class="esd-block-text es-p15t es-m-txt-c" align="right">'+
+                                        '<p style="font-size: 16px; color: #666666;"><strong>Follow us:</strong></p>'+
+                                    '</td>'+
+                                '</tr>'+
+                            '</tbody>'+
+                        '</table>'+
+                    '</td>'+
+                '</tr>'+
+            '</tbody>'+
+        '</table>'+
+        '<table class="es-right" cellspacing="0" cellpadding="0" align="right">'+
+            '<tbody>'+
+                '<tr>'+
+                    '<td class="esd-container-frame" width="361" align="left">'+
+                        '<table style="background-position: center center;" width="100%" cellspacing="0" cellpadding="0">'+
+                            '<tbody>'+
+                                '<tr>'+
+                                    '<td class="esd-block-social es-p10t es-p5b es-m-txt-c" align="left" style="font-size:0">'+
+                                        '<table class="es-table-not-adapt es-social" cellspacing="0" cellpadding="0">'+
+                                            '<tbody>'+
+                                                '<tr>'+
+                                                '<td class="es-p10r" valign="top" align="center">'+
+                                                '<a target="_blank" href="https://www.facebook.com/Khadamni-100921899214016/"><img src="https://tlr.stripocdn.email/content/assets/img/social-icons/rounded-gray/facebook-rounded-gray.png" alt="Fb" title="Facebook" width="32"></a>'+
+                                            '</td>'+
+                                            '<td class="es-p10r" valign="top" align="center">'+
+                                                '<a target="_blank" href="https://www.facebook.com/Khadamni-100921899214016/"><img src="https://tlr.stripocdn.email/content/assets/img/social-icons/rounded-gray/twitter-rounded-gray.png" alt="Tw" title="Twitter" width="32"></a>'+
+                                            '</td>'+
+                                            '<td class="es-p10r" valign="top" align="center">'+
+                                                '<a target="_blank" href="https://www.instagram.com/mohamedhbib.msahel/"><img src="https://tlr.stripocdn.email/content/assets/img/social-icons/rounded-gray/instagram-rounded-gray.png" alt="Ig" title="Instagram" width="32"></a>'+
+                                            '</td>'+
+                                            '<td class="es-p10r" valign="top" align="center">'+
+                                                '<a target="_blank" href="https://www.youtube.com/channel/UCgq2WxpWzdiu9pAaNB8Q3dw"><img src="https://tlr.stripocdn.email/content/assets/img/social-icons/rounded-gray/youtube-rounded-gray.png" alt="Yt" title="Youtube" width="32"></a>'+
+                                            '</td>'+
+                                            '<td class="es-p10r" valign="top" align="center">'+
+                                                '<a target="_blank" href="https://www.linkedin.com/in/mohamed-habib-m-sahel-9bb5a0217/"><img src="https://tlr.stripocdn.email/content/assets/img/social-icons/rounded-gray/linkedin-rounded-gray.png" alt="In" title="Linkedin" width="32"></a>'+
+                                            '</td>'+
+                                                '</tr>'+
+                                            '</tbody>'+
+                                        '</table>'+
+                                    '</td>'+
+                                '</tr>'+
+                           '</tbody>'+
+                        '</table>'+
+                    '</td>'+
+                '</tr>'+
+            '</tbody>'+
+        '</table>'+
+    '</td>'+
+    //contact us
+    '<tbody>'+
+            '<tr>'+
+    '<td class="esd-structure es-p5t es-p20b es-p20r es-p20l" align="left">'+
+        '<table width="100%" cellspacing="0" cellpadding="0">'+
+            '<tbody>'+
+                '<tr>'+
+                    '<td class="esd-container-frame" width="560" valign="top" align="center">'+
+                        '<table width="100%" cellspacing="0" cellpadding="0">'+
+                            '<tbody>'+
+                                '<tr>'+
+                                    '<td class="esd-block-text" esd-links-color="#666666" align="center">'+
+                                        '<p style="font-size: 14px;">Contact us: <a target="_blank" style="font-size: 14px; color: #666666;" href="tel:123456789">+216 29 473 912</a> | <a target="_blank" href="mailto:m\'sahel.mohamedhabib@esprit.tn" style="font-size: 14px; color: #666666;">m\'sahel.mohamedhabib@esprit.tn</a></p>'+
+                                    '</td>'+
+                                '</tr>'+
+                            '</tbody>'+
+                        '</table>'+
+                    '</td>'+
+                '</tr>'+
+            '</tbody>'+
+        '</table>'+
+    '</td>'+
+            //have any question
+            '<tbody>'+
+            '<tr>'+
+            '<td class="esd-structure es-p10t es-p30b es-p20r es-p20l" style="background-color: #0b5394;" bgcolor="#0b5394" align="left">'+
+        '<table width="100%" cellspacing="0" cellpadding="0">'+
+            '<tbody>'+
+                '<tr>'+
+                    '<td class="esd-container-frame" width="560" valign="top" align="center">'+
+                        '<table width="100%" cellspacing="0" cellpadding="0">'+
+                            '<tbody>'+
+                                '<tr>'+
+                                    '<td class="esd-block-text es-p5t es-p5b" align="left" style="padding-left: 20px;">'+
+                                        '<h2 style="font-size: 16px; color: #ffffff;"><strong>Have quastions?</strong></h2>'+
+                                    '</td>'+
+                                '</tr>'+
+                                '<tr>'+
+                                    '<td esd-links-underline="none" esd-links-color="#ffffff" class="esd-block-text es-p5b" align="left">'+
+                                        '<p style="font-size: 14px; padding-left: 20px; color: #ffffff;">We are here to help, learn more about us <a target="_blank" style="font-size: 14px; color: #ffffff; text-decoration: none;">here</a></p>'+
+                                        '<p style="font-size: 14px; padding-left: 20px; color: #ffffff;">or <a target="_blank" style="font-size: 14px; text-decoration: none; color: #ffffff;">contact us</a><br></p>'+
+                                    '</td>'+
+                                '</tr>'+
+                            '</tbody>'+
+                        '</table>'+
+                    '</td>'+
+                '</tr>'+
+            '</tbody>'+
+        '</table>'+
+    '</td>'+
+    '</tr>'+
+    '</tbody>'+
+    '</table>'+
+    '</div>'
+          }
+          smtpTrans.sendMail(mailOptions, function (err) {
+            if (err) {
+              return res.status(500).send({ msg: err });
+            }
+          });
         res.status(201).json({token:tokenJWT,
                             user:newUser,
                             reponse: "good"})
@@ -35,6 +241,15 @@ const Token = require('../models/Token');
         res.status(400).json({reponse: error.message})
     }
 }
+
+exports.downloadimage = async(req, res) => {
+    let nom = req.params.nom;
+    const file = picsPath + "/" + nom;
+    console.log(file, "hy");
+    res.sendFile(file); // Set disposition and send it.
+}
+
+
 // exports.create = (req, res) => {
 //     // Validate request
 //     if(!req.body.nom) {
@@ -91,17 +306,204 @@ exports.forgotPassword = async(req, res,next) => {
       var smtpTrans = nodemailer.createTransport({
         service: 'gmail',
         auth: {
-          user: "gbhy1919@gmail.com",
-          pass: "hellsinghakuda147"
+          user: "m'sahel.mohamedhabib@esprit.tn",
+          pass: process.env.EMAIL_MDP
         }
       });
   
       var mailOptions = {
-        from: 'gbhy1919@gmail.com', to: res.user.email, subject:
-          'Reset Password', text: 'You receive this email from Khadamni application bellow you will find a link please click on it\n\n' +
+        from: "m'sahel.mohamedhabib@esprit.tn",
+        to: res.user.email,
+        subject:'Reset Password',
+       /* text: 'You receive this email from Khadamni application bellow you will find a link please click on it\n\n' +
             'The code is  :' + token.token + '\n\n' +
             'http:\/\/' + req.headers.host + '\/users\/resetPassword\/' + res.user.email + '\/' + token.token
-            + '\n\n Si vous n\'avez pas fait cette requete, veuillez ignorer ce message et votre mot de passe sera le méme.\n'
+            + '\n\n Si vous n\'avez pas fait cette requete, veuillez ignorer ce message et votre mot de passe sera le méme.\n'*/
+            html:  '<div class="es-wrapper-color">'+
+            '<table class="es-wrapper" width="100%" cellspacing="0" cellpadding="0">'+
+            //HEADER
+            '<tbody>'+
+                '<tr>'+
+            '<td class="esd-structure es-p20t es-p20b es-p20r es-p20l" style="background-color: #3d5ca3;" bgcolor="#3d5ca3" align="left">'+
+            '<table class="es-left" cellspacing="0" cellpadding="0" align="center">'+
+            '<tbody>'+
+                '<tr>'+
+                '<td class="es-m-p20b esd-container-frame" width="270" align="left">'+
+                    '<table width="100%" cellspacing="0" cellpadding="0">'+
+                        '<tbody>'+
+                            '<tr>'+
+                                '<td class="esd-block-image es-m-p0l es-m-txt-c" align="center" style="font-size: 0px;padding: 20px">'+
+                                    '<a href="https://www.facebook.com/Khadamni-100921899214016/" target="_blank"><img src="https://fv9-6.failiem.lv/thumb_show.php?i=26a9n6fcj&view" alt style="display: block; border-radius: 8px;" width="183"></a>'+
+                                '</td>'+
+                            '</tr>'+
+                        '</tbody>'+
+                    '</table>'+
+                '</td>'+
+           ' </tr>'+
+        '</tbody>'+
+    '</table>'+
+'</td>'+
+            //container 
+            '<tbody>'+
+                '<tr>'+
+            '<td class="esd-structure es-p40t es-p20r es-p20l" style="background-color: transparent;" bgcolor="transparent" align="left">'+
+            '<table width="100%" cellspacing="0" cellpadding="0">'+
+                '<tbody>'+
+                    '<tr>'+
+                        '<td class="esd-container-frame" width="560" valign="top" align="center">'+
+                            '<table style="background-position: left top;" width="100%" cellspacing="0" cellpadding="0">'+
+                               '<tbody>'+
+                                    '<tr>'+
+                                        '<td class="esd-block-image es-p5t es-p5b" align="center" style="font-size:0">'+
+                                            '<a target="_blank"><img src="https://tlr.stripocdn.email/content/guids/CABINET_dd354a98a803b60e2f0411e893c82f56/images/23891556799905703.png" alt style="display: block;" width="175"></a>'+
+                                        '</td>'+
+                                    '</tr>'+
+                                    '<tr>'+
+                                        '<td class="esd-block-text es-p15t es-p15b" align="center">'+
+                                            '<h1 style="color: #333333; font-size: 20px;"><strong>FORGOT YOUR </strong></h1>'+
+                                            '<h1 style="color: #333333; font-size: 20px;"><strong>&nbsp;PASSWORD?</strong></h1>'+
+                                        '</td>'+
+                                    '</tr>'+
+                                    '<tr>'+
+                                        '<td class="esd-block-text es-p40r es-p40l" align="center">'+
+                                        '<p>HI,'+res.user.nom+' '+res.user.prenom+'</p>'+
+                                        '</td>'+
+                                    '</tr>'+
+                                   '<tr>'+
+                                        '<td class="esd-block-text es-p35r es-p40l" align="left">'+
+                                            '<p style="text-align: center;">There was a request to change your password!</p>'+
+                                        '</td>'+
+                                    '</tr>'+
+                                    '<tr>'+
+                                        '<td class="esd-block-text es-p25t es-p40r es-p40l" align="center">'+
+                                            '<p>If did not make this request, just ignore this email. Otherwise, please copy the code bellow and past it on the app</p>'+
+                                        '</td>'+
+                                    '</tr>'+
+                                    '<tr>'+
+                                        '<td class="esd-block-text es-p25t es-p40r es-p40l" align="center">'+
+                                            '<p>This is the code:'+token.token+'</p>'+
+                                        '</td>'+
+                                    '</tr>'+
+                                '</tbody>'+
+                            '</table>'+
+                       '</td>'+
+                    '</tr>'+
+                '</tbody>'+
+            '</table>'+
+        '</td>'+
+        //follow us
+        '<tbody>'+
+        '<tr>'+
+        '<td class="esd-structure es-p20t es-p10r es-p10l" align="left">'+
+    '<table class="es-left" cellspacing="0" cellpadding="0" align="left">'+
+        '<tbody>'+
+            '<tr>'+
+                '<td class="esd-container-frame" width="199" align="left">'+
+                    '<table style="background-position: center center;" width="100%" cellspacing="0" cellpadding="0">'+
+                        '<tbody>'+
+                            '<tr>'+
+                                '<td class="esd-block-text es-p15t es-m-txt-c" align="right">'+
+                                    '<p style="font-size: 16px; color: #666666;"><strong>Follow us:</strong></p>'+
+                                '</td>'+
+                            '</tr>'+
+                        '</tbody>'+
+                    '</table>'+
+                '</td>'+
+            '</tr>'+
+        '</tbody>'+
+    '</table>'+
+    '<table class="es-right" cellspacing="0" cellpadding="0" align="right">'+
+        '<tbody>'+
+            '<tr>'+
+                '<td class="esd-container-frame" width="361" align="left">'+
+                    '<table style="background-position: center center;" width="100%" cellspacing="0" cellpadding="0">'+
+                        '<tbody>'+
+                            '<tr>'+
+                                '<td class="esd-block-social es-p10t es-p5b es-m-txt-c" align="left" style="font-size:0">'+
+                                    '<table class="es-table-not-adapt es-social" cellspacing="0" cellpadding="0">'+
+                                        '<tbody>'+
+                                            '<tr>'+
+                                                '<td class="es-p10r" valign="top" align="center">'+
+                                                    '<a target="_blank" href="https://www.facebook.com/Khadamni-100921899214016/"><img src="https://tlr.stripocdn.email/content/assets/img/social-icons/rounded-gray/facebook-rounded-gray.png" alt="Fb" title="Facebook" width="32"></a>'+
+                                                '</td>'+
+                                                '<td class="es-p10r" valign="top" align="center">'+
+                                                    '<a target="_blank" href="https://www.facebook.com/Khadamni-100921899214016/"><img src="https://tlr.stripocdn.email/content/assets/img/social-icons/rounded-gray/twitter-rounded-gray.png" alt="Tw" title="Twitter" width="32"></a>'+
+                                                '</td>'+
+                                                '<td class="es-p10r" valign="top" align="center">'+
+                                                    '<a target="_blank" href="https://www.instagram.com/mohamedhbib.msahel/"><img src="https://tlr.stripocdn.email/content/assets/img/social-icons/rounded-gray/instagram-rounded-gray.png" alt="Ig" title="Instagram" width="32"></a>'+
+                                                '</td>'+
+                                                '<td class="es-p10r" valign="top" align="center">'+
+                                                    '<a target="_blank" href="https://www.youtube.com/channel/UCgq2WxpWzdiu9pAaNB8Q3dw"><img src="https://tlr.stripocdn.email/content/assets/img/social-icons/rounded-gray/youtube-rounded-gray.png" alt="Yt" title="Youtube" width="32"></a>'+
+                                                '</td>'+
+                                                '<td class="es-p10r" valign="top" align="center">'+
+                                                    '<a target="_blank" href="https://www.linkedin.com/in/mohamed-habib-m-sahel-9bb5a0217/"><img src="https://tlr.stripocdn.email/content/assets/img/social-icons/rounded-gray/linkedin-rounded-gray.png" alt="In" title="Linkedin" width="32"></a>'+
+                                                '</td>'+
+                                            '</tr>'+
+                                        '</tbody>'+
+                                    '</table>'+
+                                '</td>'+
+                            '</tr>'+
+                       '</tbody>'+
+                    '</table>'+
+                '</td>'+
+            '</tr>'+
+        '</tbody>'+
+    '</table>'+
+'</td>'+
+//contact us
+'<tbody>'+
+        '<tr>'+
+'<td class="esd-structure es-p5t es-p20b es-p20r es-p20l" align="left">'+
+    '<table width="100%" cellspacing="0" cellpadding="0">'+
+        '<tbody>'+
+            '<tr>'+
+                '<td class="esd-container-frame" width="560" valign="top" align="center">'+
+                    '<table width="100%" cellspacing="0" cellpadding="0">'+
+                        '<tbody>'+
+                            '<tr>'+
+                                '<td class="esd-block-text" esd-links-color="#666666" align="center">'+
+                                    '<p style="font-size: 14px;">Contact us: <a target="_blank" style="font-size: 14px; color: #666666;" href="tel:123456789">+216 29 473 912</a> | <a target="_blank" href="mailto:m\'sahel.mohamedhabib@esprit.tn" style="font-size: 14px; color: #666666;">m\'sahel.mohamedhabib@esprit.tn</a></p>'+
+                                '</td>'+
+                            '</tr>'+
+                        '</tbody>'+
+                    '</table>'+
+                '</td>'+
+            '</tr>'+
+        '</tbody>'+
+    '</table>'+
+'</td>'+
+        //have any question
+        '<tbody>'+
+        '<tr>'+
+        '<td class="esd-structure es-p10t es-p30b es-p20r es-p20l" style="background-color: #0b5394;" bgcolor="#0b5394" align="left">'+
+    '<table width="100%" cellspacing="0" cellpadding="0">'+
+        '<tbody>'+
+            '<tr>'+
+                '<td class="esd-container-frame" width="560" valign="top" align="center">'+
+                    '<table width="100%" cellspacing="0" cellpadding="0">'+
+                        '<tbody>'+
+                            '<tr>'+
+                                '<td class="esd-block-text es-p5t es-p5b" align="left" style="padding-left: 20px;">'+
+                                    '<h2 style="font-size: 16px; color: #ffffff;"><strong>Have quastions?</strong></h2>'+
+                                '</td>'+
+                            '</tr>'+
+                            '<tr>'+
+                                '<td esd-links-underline="none" esd-links-color="#ffffff" class="esd-block-text es-p5b" align="left">'+
+                                    '<p style="font-size: 14px; padding-left: 20px; color: #ffffff;">We are here to help, learn more about us <a target="_blank" style="font-size: 14px; color: #ffffff; text-decoration: none;">here</a></p>'+
+                                    '<p style="font-size: 14px; padding-left: 20px; color: #ffffff;">or <a target="_blank" style="font-size: 14px; text-decoration: none; color: #ffffff;">contact us</a><br></p>'+
+                                '</td>'+
+                            '</tr>'+
+                        '</tbody>'+
+                    '</table>'+
+                '</td>'+
+            '</tr>'+
+        '</tbody>'+
+    '</table>'+
+'</td>'+
+'</tr>'+
+'</tbody>'+
+'</table>'+
+'</div>'
       };
       // Send email (use credintials of SendGrid)
   
@@ -234,16 +636,23 @@ exports.findOneEmail = (req, res, next) => {
 };
 
 // Update a note identified by the noteId in the request
-exports.update = (req, res) => {
-
+exports.update = async(req, res) => {
+    console.log("mani nessi lefri9i enti 3inaya")
+    if (req.file != null) {
+        const photoCloudinary = await cloudinary.uploader.upload(req.file.path)
+        //const photoCloudinary = await cloudinary.uploader.upload(req.file.filename)
+        req.body.urlImg = photoCloudinary.url
+      } else {
+        req.body.urlImg  = "https://res.cloudinary.com/dy05x9auh/image/upload/v1648226974/athlete_lxnnu3.png"
+      }
     User.findByIdAndUpdate(req.params.userId, {
-        nom : req.body.nom || "Untitled Note",
+        nom : req.body.nom ,
         prenom : req.body.prenom ,
         email :req.body.email ,
         phone :req.body.phone ,
         address :req.body.address,
         job :req.body.job,
-        urlImg : `${req.protocol}://${req.get('host')}/upload/${req.file.filename}`
+        urlImg : req.body.urlImg
     }, {new: true})
     .then(note => {
         if(!note) {
@@ -517,39 +926,40 @@ res.status(400).json({reponse: error.message})
             res.status(400).json({reponse : "mdp incorrect"})
         } 
     }*/
-exports.login = async(req, res) => {
-if (res.user == null) {
-    return res.status(404).send("Utilisateur introuvable")
-  }
-  try {
-    console.log(req.body.password)
-    console.log(res.user.password)
-
-    if (await bcrypt.compare(req.body.password, res.user.password)) {
-      const token = jwt.sign({ email: res.user.email }, "SECRET")
-      if (token) {
-        res.json({
-          token: token,
-          user: res.user,
-          reponse: "Success"
-        })
-      }
-    } else
-      res.json({
-        nom: res.user.nom,
-        prenom: res.user.prenom,
-        email: res.user.email,
-        password: hashedPass,
-        phone: res.user.phone,
-        address: res.user.address,
-        job: res.user.job,
-        urlImg: res.user.urlImg
-      })
-
-  } catch (error) {
-    res.status(400).json({ reponse: "mdp incorrect" })
-  }
-}
+    exports.login = async(req, res) => {
+        console.log("aaaaaaaaaaaaaa")
+        if (res.user == null) {
+            return res.status(404).send("Utilisateur introuvable")
+          }
+          try {
+            console.log(req.body.password)
+            console.log(res.user.password)
+        
+            if (await bcrypt.compare(req.body.password, res.user.password)) {
+              const token = jwt.sign({ email: res.user.email }, "SECRET")
+              if (token) {
+                res.json({
+                  token: token,
+                  user: res.user,
+                  reponse: "Success"
+                })
+              }
+            } else
+              res.json({
+                nom: res.user.nom,
+                prenom: res.user.prenom,
+                email: res.user.email,
+                password: hashedPass,
+                phone: res.user.phone,
+                address: res.user.address,
+                job: res.user.job,
+                urlImg: res.user.urlImg
+              })
+        
+          } catch (error) {
+            res.status(400).json({ reponse: "mdp incorrect" })
+          }
+        }
 //resestpassword
 exports.resetPassword = async(req, res,next) => {
     console.log("Ena body")
@@ -682,7 +1092,7 @@ exports.Auth = async(req, res,next) => {
     } 
     next();
 };
-    exports.getUserByMail = async(req, res,next) => {
+exports.getUserByMail = async(req, res,next) => {
     let user
     try {
         user = await User.findOne({email:req.body.email})
